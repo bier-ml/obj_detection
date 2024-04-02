@@ -14,7 +14,7 @@ from train import train_fn
 EPOCHS = 1
 LEARNING_RATE = 2e-5
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-BATCH_SIZE = 32  # 64 in original paper but resource exhausted error otherwise.
+BATCH_SIZE = 32
 WEIGHT_DECAY = 0
 EPOCHS = 20
 NUM_WORKERS = 2

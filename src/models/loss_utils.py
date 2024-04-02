@@ -13,8 +13,6 @@ def intersection_over_union(boxes_preds, boxes_labels, box_format="midpoint"):
     Returns:
         tensor: Intersection over union for all examples
     """
-    # boxes_preds shape is (N, 4) where N is the number of bboxes
-    # boxes_labels shape is (n, 4)
 
     if box_format == "midpoint":
         box1_x1 = boxes_preds[..., 0:1] - boxes_preds[..., 2:3] / 2
@@ -43,7 +41,6 @@ def intersection_over_union(boxes_preds, boxes_labels, box_format="midpoint"):
     x2 = torch.min(box1_x2, box2_x2)
     y2 = torch.min(box1_y2, box2_y2)
 
-    # .clamp(0) is for the case when they don't intersect. Since when they don't intersect, one of these will be negative so that should become 0
     intersection = (x2 - x1).clamp(0) * (y2 - y1).clamp(0)
 
     box1_area = abs((box1_x2 - box1_x1) * (box1_y2 - box1_y1))
@@ -53,19 +50,7 @@ def intersection_over_union(boxes_preds, boxes_labels, box_format="midpoint"):
 
 
 def non_max_suppression(bboxes, iou_threshold, threshold, box_format="corners"):
-    """
-    Does Non Max Suppression given bboxes
-    Parameters:
-        bboxes (list): list of lists containing all bboxes with each bboxes
-        specified as [class_pred, prob_score, x1, y1, x2, y2]
-        iou_threshold (float): threshold where predicted bboxes is correct
-        threshold (float): threshold to remove predicted bboxes (independent of IoU)
-        box_format (str): "midpoint" or "corners" used to specify bboxes
-    Returns:
-        list: bboxes after performing NMS given a specific IoU threshold
-    """
-
-    assert type(bboxes) == list
+    assert type(bboxes) == list  # noqa: E721
 
     bboxes = [box for box in bboxes if box[1] > threshold]
     bboxes = sorted(bboxes, key=lambda x: x[1], reverse=True)
@@ -103,7 +88,6 @@ def get_bboxes(
     all_pred_boxes = []
     all_true_boxes = []
 
-    # make sure model is in eval before get bboxes
     model.eval()
     train_idx = 0
 
@@ -134,7 +118,6 @@ def get_bboxes(
                 all_pred_boxes.append([train_idx] + nms_box)
 
             for box in true_bboxes[idx]:
-                # many will get converted to 0 pred
                 if box[1] > threshold:
                     all_true_boxes.append([train_idx] + box)
 
@@ -145,16 +128,6 @@ def get_bboxes(
 
 
 def convert_cellboxes(predictions, S=7, C=80):
-    """
-    Converts bounding boxes output from Yolo with
-    an image split size of S into entire image ratios
-    rather than relative to cell ratios. Tried to do this
-    vectorized, but this resulted in quite difficult to read
-    code... Use as a black box? Or implement a more intuitive,
-    using 2 for loops iterating range(S) and convert them one
-    by one, resulting in a slower but more readable implementation.
-    """
-
     predictions = predictions.to("cpu")
     batch_size = predictions.shape[0]
     predictions = predictions.reshape(batch_size, 7, 7, C + 10)
